@@ -10,11 +10,14 @@ import { Calendar, MapPin, Clock, User, Phone, Mail, CreditCard, Car, Bike, Zap 
 const BookingForm = () => {
   const navigate = useNavigate();
   
-  // État du formulaire
+  // Récupérer les données du véhicule sélectionné
+  const selectedVehicle = JSON.parse(localStorage.getItem('selectedVehicle') || '{}');
+  
+  // État du formulaire avec pré-remplissage
   const [formData, setFormData] = useState({
-    vehicleType: '',
-    pickupStation: '',
-    returnStation: '',
+    vehicleType: selectedVehicle.vehicleType || '',
+    pickupStation: selectedVehicle.pickupStation || '',
+    returnStation: selectedVehicle.returnStation || '',
     startDate: '',
     startTime: '',
     endDate: '',
@@ -26,7 +29,7 @@ const BookingForm = () => {
     totalPrice: 0
   });
 
-  // Types de véhicules disponibles
+  // Types de véhicules disponibles avec prix
   const vehicleTypes = [
     { value: 'trottinette', label: 'Trottinette électrique', price: 500 },
     { value: 'scooter', label: 'Scooter', price: 800 },
@@ -44,6 +47,27 @@ const BookingForm = () => {
     'Station Yoff',
     'Station Ouakam'
   ];
+
+  // Pré-remplir le formulaire si un véhicule a été sélectionné
+  React.useEffect(() => {
+    if (selectedVehicle.vehicleType) {
+      console.log('🚗 Véhicule pré-sélectionné détecté:', selectedVehicle); // Debug
+      
+      // Trouver le prix du véhicule sélectionné
+      const vehicle = vehicleTypes.find(v => v.value === selectedVehicle.vehicleType);
+      const price = vehicle ? vehicle.price : selectedVehicle.vehiclePrice || 0;
+      
+      setFormData(prev => ({
+        ...prev,
+        vehicleType: selectedVehicle.vehicleType,
+        pickupStation: selectedVehicle.pickupStation,
+        returnStation: selectedVehicle.returnStation,
+        totalPrice: price
+      }));
+      
+      console.log('✅ Formulaire pré-rempli avec les données du véhicule'); // Debug
+    }
+  }, [selectedVehicle.vehicleType]);
 
   // Gestion des changements de champs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -144,6 +168,10 @@ const BookingForm = () => {
     localStorage.setItem('currentReservation', JSON.stringify(reservation));
     console.log('💾 Réservation sauvegardée dans localStorage'); // Debug
 
+    // Nettoyer les données du véhicule sélectionné
+    localStorage.removeItem('selectedVehicle');
+    console.log('🧹 Données véhicule nettoyées'); // Debug
+
     // Navigation vers la page de confirmation
     console.log('🚀 Redirection vers /location/confirmation'); // Debug
     navigate('/location/confirmation', { 
@@ -155,6 +183,37 @@ const BookingForm = () => {
     <div className="min-h-screen bg-muted/30 p-4">
       <div className="container mx-auto max-w-4xl">
         <h1 className="text-3xl font-bold mb-8 text-center">Réserver un véhicule</h1>
+        
+        {/* Indicateur de véhicule pré-sélectionné */}
+        {selectedVehicle.vehicleType && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                  <div>
+                    <p className="font-semibold text-green-800">
+                      Véhicule pré-sélectionné : {vehicleTypes.find(v => v.value === selectedVehicle.vehicleType)?.label}
+                    </p>
+                    <p className="text-sm text-green-600">
+                      Station : {selectedVehicle.pickupStation}
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    localStorage.removeItem('selectedVehicle');
+                    window.location.reload();
+                  }}
+                >
+                  Changer de véhicule
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         <div className="grid md:grid-cols-2 gap-8">
           {/* Formulaire de réservation */}
