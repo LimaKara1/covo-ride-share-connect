@@ -33,35 +33,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Car className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold text-gradient">COVO</span>
-          </div>
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/covoiturage" className="text-foreground hover:text-primary transition-colors">
-              Covoiturage
-            </Link>
-            <Link to="/location" className="text-foreground hover:text-primary transition-colors">
-              Location
-            </Link>
-            <Link to="/stations" className="text-foreground hover:text-primary transition-colors">
-              Stations
-            </Link>
-          </nav>
-          <div className="flex items-center space-x-3">
-            <Link to="/login">
-              <Button variant="outline">Connexion</Button>
-            </Link>
-            <Link to="/register">
-              <Button>Inscription</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-primary/5 to-secondary/5 py-20">
         <div className="container mx-auto px-4 text-center">

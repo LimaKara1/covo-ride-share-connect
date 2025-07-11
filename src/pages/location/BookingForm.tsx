@@ -1,150 +1,155 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Clock, User, Phone, Mail, CreditCard } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { Calendar, MapPin, Clock, User, Phone, Mail, CreditCard, Car, Bike, Zap } from 'lucide-react';
 
 const BookingForm = () => {
-  const [bookingData, setBookingData] = useState({
-    vehicleType: 'car',
-    vehicleName: 'Renault Clio',
-    pickupStation: 'Station Plateau',
-    returnStation: 'Station Plateau',
+  const navigate = useNavigate();
+  
+  // État du formulaire
+  const [formData, setFormData] = useState({
+    vehicleType: '',
+    pickupStation: '',
+    returnStation: '',
     startDate: '',
-    endDate: '',
     startTime: '',
+    endDate: '',
     endTime: '',
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    duration: '',
-    totalPrice: 0,
+    totalPrice: 0
   });
 
-  const [showQR, setShowQR] = useState(false);
-  const [bookingId, setBookingId] = useState('');
+  // Types de véhicules disponibles
+  const vehicleTypes = [
+    { value: 'trottinette', label: 'Trottinette électrique', price: 500 },
+    { value: 'scooter', label: 'Scooter', price: 800 },
+    { value: 'voiture', label: 'Voiture', price: 1500 },
+    { value: 'tricycle', label: 'Tricycle', price: 600 },
+    { value: 'jetski', label: 'Jetski', price: 2500 }
+  ];
 
+  // Stations disponibles
+  const stations = [
+    'Station Plateau',
+    'Station Almadies', 
+    'Station Université',
+    'Station Médina',
+    'Station Yoff',
+    'Station Ouakam'
+  ];
+
+  // Gestion des changements de champs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setBookingData(prev => ({
+    console.log(`Champ ${name} modifié:`, value); // Debug
+    
+    setFormData(prev => ({
       ...prev,
       [name]: value
     }));
 
-    // Calcul automatique du prix
-    if (name === 'startDate' || name === 'endDate' || name === 'startTime' || name === 'endTime') {
+    // Recalculer le prix si les champs de date/heure changent
+    if (['vehicleType', 'startDate', 'startTime', 'endDate', 'endTime'].includes(name)) {
       calculatePrice();
     }
   };
 
+  // Calcul automatique du prix
   const calculatePrice = () => {
-    // Simulation de calcul de prix
-    const baseRate = bookingData.vehicleType === 'car' ? 1500 : 
-                    bookingData.vehicleType === 'scooter' ? 800 : 500;
-    const hours = 2; // Simplifié pour la démo
-    setBookingData(prev => ({ ...prev, totalPrice: baseRate * hours }));
+    if (!formData.vehicleType || !formData.startDate || !formData.endDate || !formData.startTime || !formData.endTime) {
+      return;
+    }
+
+    const vehicle = vehicleTypes.find(v => v.value === formData.vehicleType);
+    if (!vehicle) return;
+
+    const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
+    const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`);
+    
+    if (startDateTime >= endDateTime) {
+      setFormData(prev => ({ ...prev, totalPrice: 0 }));
+      return;
+    }
+
+    const diffMs = endDateTime.getTime() - startDateTime.getTime();
+    const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+    
+    const totalPrice = vehicle.price * diffHours;
+    console.log(`Prix calculé: ${totalPrice} CFA pour ${diffHours} heures`); // Debug
+    
+    setFormData(prev => ({ ...prev, totalPrice }));
   };
 
+  // Validation du formulaire
+  const isFormValid = () => {
+    const required = [
+      'vehicleType', 'pickupStation', 'returnStation', 
+      'startDate', 'endDate', 'startTime', 'endTime',
+      'firstName', 'lastName', 'email', 'phone'
+    ];
+    
+    const isValid = required.every(field => formData[field as keyof typeof formData]) && formData.totalPrice > 0;
+    console.log('Formulaire valide:', isValid); // Debug
+    return isValid;
+  };
+
+  // Soumission du formulaire
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Génération d'un ID de réservation
-    const newBookingId = `COVO-${Date.now()}`;
-    setBookingId(newBookingId);
-    setShowQR(true);
-    console.log('Réservation créée:', { ...bookingData, bookingId: newBookingId });
+    console.log('=== DÉBUT SOUMISSION FORMULAIRE ==='); // Debug
+    
+    // Validation complète
+    if (!isFormValid()) {
+      console.log('❌ Validation échouée - champs manquants'); // Debug
+      alert('Veuillez remplir tous les champs obligatoires et vérifier les dates.');
+      return;
+    }
+
+    console.log('✅ Validation réussie'); // Debug
+
+    // Génération d'un ID unique
+    const bookingId = `COVO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log('ID de réservation généré:', bookingId); // Debug
+
+    // Création de l'objet réservation
+    const reservation = {
+      bookingId,
+      vehicleType: formData.vehicleType,
+      vehicleLabel: vehicleTypes.find(v => v.value === formData.vehicleType)?.label || '',
+      pickupStation: formData.pickupStation,
+      returnStation: formData.returnStation,
+      startDate: formData.startDate,
+      startTime: formData.startTime,
+      endDate: formData.endDate,
+      endTime: formData.endTime,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      totalPrice: formData.totalPrice,
+      status: 'confirmed',
+      createdAt: new Date().toISOString()
+    };
+
+    console.log('📋 Réservation créée:', reservation); // Debug
+
+    // Sauvegarde temporaire (mode fallback)
+    localStorage.setItem('currentReservation', JSON.stringify(reservation));
+    console.log('💾 Réservation sauvegardée dans localStorage'); // Debug
+
+    // Navigation vers la page de confirmation
+    console.log('🚀 Redirection vers /location/confirmation'); // Debug
+    navigate('/location/confirmation', { 
+      state: { reservation } 
+    });
   };
-
-  const qrData = JSON.stringify({
-    bookingId,
-    vehicleType: bookingData.vehicleType,
-    vehicleName: bookingData.vehicleName,
-    pickupStation: bookingData.pickupStation,
-    customer: `${bookingData.firstName} ${bookingData.lastName}`,
-    phone: bookingData.phone,
-    startDate: bookingData.startDate,
-    startTime: bookingData.startTime,
-    totalPrice: bookingData.totalPrice,
-    status: 'confirmed'
-  });
-
-  if (showQR) {
-    return (
-      <div className="min-h-screen bg-muted/30 p-4">
-        <div className="container mx-auto max-w-2xl">
-          <Card className="shadow-lg">
-            <CardHeader className="text-center bg-primary text-primary-foreground">
-              <CardTitle className="text-2xl">Réservation confirmée !</CardTitle>
-              <CardDescription className="text-primary-foreground/80">
-                Voici votre QR code de réservation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-8 text-center">
-              <div className="bg-white p-6 rounded-lg inline-block shadow-inner mb-6">
-                <QRCodeSVG 
-                  value={qrData}
-                  size={200}
-                  level="M"
-                  includeMargin={true}
-                />
-              </div>
-              
-              <div className="space-y-4 text-left bg-muted/50 p-4 rounded-lg">
-                <h3 className="font-semibold text-lg mb-3">Détails de votre réservation</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">ID Réservation:</span>
-                    <p className="text-primary font-mono">{bookingId}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">Véhicule:</span>
-                    <p>{bookingData.vehicleName}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">Station:</span>
-                    <p>{bookingData.pickupStation}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">Prix total:</span>
-                    <p className="text-primary font-semibold">{bookingData.totalPrice} CFA</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-primary/10 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-2">
-                  <strong>Instructions:</strong> Présentez ce QR code à l'agent de la station pour récupérer votre véhicule.
-                </p>
-                <Badge variant="default" className="text-xs">
-                  QR Code valide 24h
-                </Badge>
-              </div>
-
-              <div className="flex gap-4 mt-6">
-                <Button 
-                  onClick={() => setShowQR(false)}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Nouvelle réservation
-                </Button>
-                <Button 
-                  onClick={() => window.print()}
-                  className="flex-1"
-                >
-                  Imprimer
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-muted/30 p-4">
@@ -162,75 +167,92 @@ const BookingForm = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="vehicleType">Type de véhicule</Label>
-                    <select
-                      id="vehicleType"
-                      name="vehicleType"
-                      value={bookingData.vehicleType}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-md"
-                      required
-                    >
-                      <option value="car">Voiture</option>
-                      <option value="scooter">Scooter</option>
-                      <option value="electric">Trottinette électrique</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="vehicleName">Modèle</Label>
-                    <Input
-                      id="vehicleName"
-                      name="vehicleName"
-                      value={bookingData.vehicleName}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </div>
-
+                {/* Type de véhicule */}
                 <div className="space-y-2">
-                  <Label htmlFor="pickupStation">Station de retrait</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <select
-                      id="pickupStation"
-                      name="pickupStation"
-                      value={bookingData.pickupStation}
-                      onChange={handleInputChange}
-                      className="w-full p-2 pl-10 border rounded-md"
-                      required
-                    >
-                      <option value="Station Plateau">Station Plateau</option>
-                      <option value="Station Almadies">Station Almadies</option>
-                      <option value="Station Université">Station Université</option>
-                      <option value="Station Médina">Station Médina</option>
-                    </select>
+                  <Label htmlFor="vehicleType">Type de véhicule *</Label>
+                  <select
+                    id="vehicleType"
+                    name="vehicleType"
+                    value={formData.vehicleType}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border rounded-md focus:ring-2 focus:ring-primary"
+                    required
+                  >
+                    <option value="">Sélectionnez un véhicule</option>
+                    {vehicleTypes.map((vehicle) => (
+                      <option key={vehicle.value} value={vehicle.value}>
+                        {vehicle.label} - {vehicle.price} CFA/h
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Stations */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="pickupStation">Station de retrait *</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <select
+                        id="pickupStation"
+                        name="pickupStation"
+                        value={formData.pickupStation}
+                        onChange={handleInputChange}
+                        className="w-full p-3 pl-10 border rounded-md focus:ring-2 focus:ring-primary"
+                        required
+                      >
+                        <option value="">Sélectionnez une station</option>
+                        {stations.map((station) => (
+                          <option key={station} value={station}>{station}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="returnStation">Station de retour *</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <select
+                        id="returnStation"
+                        name="returnStation"
+                        value={formData.returnStation}
+                        onChange={handleInputChange}
+                        className="w-full p-3 pl-10 border rounded-md focus:ring-2 focus:ring-primary"
+                        required
+                      >
+                        <option value="">Sélectionnez une station</option>
+                        {stations.map((station) => (
+                          <option key={station} value={station}>{station}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
+                {/* Dates et heures */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="startDate">Date de début</Label>
+                    <Label htmlFor="startDate">Date de début *</Label>
                     <Input
                       id="startDate"
                       name="startDate"
                       type="date"
-                      value={bookingData.startDate}
+                      value={formData.startDate}
                       onChange={handleInputChange}
+                      min={new Date().toISOString().split('T')[0]}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="startTime">Heure de début</Label>
+                    <Label htmlFor="startTime">Heure de début *</Label>
                     <div className="relative">
                       <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="startTime"
                         name="startTime"
                         type="time"
-                        value={bookingData.startTime}
+                        value={formData.startTime}
                         onChange={handleInputChange}
                         className="pl-10"
                         required
@@ -241,25 +263,26 @@ const BookingForm = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="endDate">Date de fin</Label>
+                    <Label htmlFor="endDate">Date de fin *</Label>
                     <Input
                       id="endDate"
                       name="endDate"
                       type="date"
-                      value={bookingData.endDate}
+                      value={formData.endDate}
                       onChange={handleInputChange}
+                      min={formData.startDate || new Date().toISOString().split('T')[0]}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="endTime">Heure de fin</Label>
+                    <Label htmlFor="endTime">Heure de fin *</Label>
                     <div className="relative">
                       <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="endTime"
                         name="endTime"
                         type="time"
-                        value={bookingData.endTime}
+                        value={formData.endTime}
                         onChange={handleInputChange}
                         className="pl-10"
                         required
@@ -268,17 +291,31 @@ const BookingForm = () => {
                   </div>
                 </div>
 
-                <Button type="button" onClick={calculatePrice} variant="outline" className="w-full">
-                  Calculer le prix
-                </Button>
-
-                {bookingData.totalPrice > 0 && (
+                {/* Calcul du prix */}
+                {formData.totalPrice > 0 && (
                   <div className="p-4 bg-primary/10 rounded-lg text-center">
                     <p className="text-lg font-semibold text-primary">
-                      Prix total: {bookingData.totalPrice} CFA
+                      Prix total: {formData.totalPrice} CFA
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {(() => {
+                        const start = new Date(`${formData.startDate}T${formData.startTime}`);
+                        const end = new Date(`${formData.endDate}T${formData.endTime}`);
+                        const hours = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60));
+                        return `${hours} heure(s) de location`;
+                      })()}
                     </p>
                   </div>
                 )}
+
+                {/* Bouton de soumission */}
+                <Button 
+                  type="submit"
+                  className="w-full"
+                  disabled={!isFormValid()}
+                >
+                  Valider ma réservation
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -288,28 +325,28 @@ const BookingForm = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <User className="mr-2 h-5 w-5" />
-                Vos informations
+                Vos coordonnées
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">Prénom</Label>
+                    <Label htmlFor="firstName">Prénom *</Label>
                     <Input
                       id="firstName"
                       name="firstName"
-                      value={bookingData.firstName}
+                      value={formData.firstName}
                       onChange={handleInputChange}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Nom</Label>
+                    <Label htmlFor="lastName">Nom *</Label>
                     <Input
                       id="lastName"
                       name="lastName"
-                      value={bookingData.lastName}
+                      value={formData.lastName}
                       onChange={handleInputChange}
                       required
                     />
@@ -317,14 +354,14 @@ const BookingForm = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       name="email"
                       type="email"
-                      value={bookingData.email}
+                      value={formData.email}
                       onChange={handleInputChange}
                       className="pl-10"
                       required
@@ -333,16 +370,17 @@ const BookingForm = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Téléphone</Label>
+                  <Label htmlFor="phone">Téléphone *</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="phone"
                       name="phone"
                       type="tel"
-                      value={bookingData.phone}
+                      value={formData.phone}
                       onChange={handleInputChange}
                       className="pl-10"
+                      placeholder="+221 77 123 45 67"
                       required
                     />
                   </div>
@@ -369,13 +407,18 @@ const BookingForm = () => {
                   </div>
                 </div>
 
-                <Button 
-                  onClick={handleSubmit}
-                  className="w-full"
-                  disabled={!bookingData.firstName || !bookingData.email || bookingData.totalPrice === 0}
-                >
-                  Confirmer la réservation
-                </Button>
+                {/* Indicateur de validation */}
+                <div className="p-3 rounded-lg text-sm">
+                  {isFormValid() ? (
+                    <div className="text-green-600 bg-green-50 p-2 rounded">
+                      ✅ Formulaire complet - Prêt à valider
+                    </div>
+                  ) : (
+                    <div className="text-orange-600 bg-orange-50 p-2 rounded">
+                      ⚠️ Veuillez remplir tous les champs obligatoires
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

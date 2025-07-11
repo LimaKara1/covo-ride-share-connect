@@ -12,6 +12,7 @@ import SearchTrips from "./pages/covoiturage/SearchTrips";
 import CreateTrip from "./pages/covoiturage/CreateTrip";
 import VehicleRentals from "./pages/location/VehicleRentals";
 import BookingForm from "./pages/location/BookingForm";
+import ConfirmationReservation from "./pages/location/ConfirmationReservation";
 import Stations from "./pages/Stations";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -42,6 +43,7 @@ const App = () => (
             {/* Routes location */}
             <Route path="/location" element={<VehicleRentals />} />
             <Route path="/location/book" element={<BookingForm />} />
+            <Route path="/location/confirmation" element={<ConfirmationReservation />} />
             
             {/* Autres routes */}
             <Route path="/stations" element={<Stations />} />
