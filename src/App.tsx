@@ -1,9 +1,19 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import SearchTrips from "./pages/covoiturage/SearchTrips";
+import CreateTrip from "./pages/covoiturage/CreateTrip";
+import VehicleRentals from "./pages/location/VehicleRentals";
+import BookingForm from "./pages/location/BookingForm";
+import Stations from "./pages/Stations";
+import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -16,7 +26,24 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Routes covoiturage */}
+          <Route path="/covoiturage" element={<SearchTrips />} />
+          <Route path="/covoiturage/search" element={<SearchTrips />} />
+          <Route path="/covoiturage/create" element={<CreateTrip />} />
+          
+          {/* Routes location */}
+          <Route path="/location" element={<VehicleRentals />} />
+          <Route path="/location/book" element={<BookingForm />} />
+          
+          {/* Autres routes */}
+          <Route path="/stations" element={<Stations />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          
+          {/* Route catch-all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
