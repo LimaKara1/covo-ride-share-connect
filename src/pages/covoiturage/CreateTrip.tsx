@@ -1,44 +1,88 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Calendar, Clock, Car, Users, DollarSign, Plus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowLeft, Car, MapPin, Clock, Users, DollarSign, Plus } from 'lucide-react';
 
 const CreateTrip = () => {
   const [tripData, setTripData] = useState({
-    from: '',
-    to: '',
+    departure: '',
+    destination: '',
     date: '',
     time: '',
-    seats: 1,
     price: '',
+    availableSeats: '',
     vehicle: '',
+    vehicleColor: '',
     description: '',
-    recurringDays: [],
+    amenities: [],
+    recurringTrip: false,
+    allowPets: false,
+    smokingAllowed: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Create trip:', tripData);
+    console.log('Création du trajet:', tripData);
     // Ici vous ajouterez la logique de création de trajet
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setTripData(prev => ({
+        ...prev,
+        [name]: checked
+      }));
+    } else {
+      setTripData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleAmenityChange = (amenity: string, checked: boolean) => {
     setTripData(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseInt(value) || 0 : value
+      amenities: checked
+        ? [...prev.amenities, amenity]
+        : prev.amenities.filter(a => a !== amenity)
     }));
   };
+
+  const amenitiesList = [
+    'Climatisation',
+    'Musique',
+    'WiFi',
+    'Chargeur téléphone',
+    'Bagages autorisés',
+    'Conversation',
+    'Silence',
+  ];
 
   return (
     <div className="min-h-screen bg-muted/30 p-4">
       <div className="container mx-auto max-w-2xl">
+        {/* Header avec bouton retour */}
+        <div className="flex items-center mb-6">
+          <Link to="/covoiturage">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Retour à la recherche
+            </Button>
+          </Link>
+        </div>
+
         <h1 className="text-3xl font-bold mb-8 text-center">Proposer un trajet</h1>
-        
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -46,7 +90,7 @@ const CreateTrip = () => {
               Créer un nouveau trajet
             </CardTitle>
             <CardDescription>
-              Partagez votre trajet et voyagez de manière économique et conviviale
+              Partagez votre trajet et réduisez les coûts de transport
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -54,16 +98,16 @@ const CreateTrip = () => {
               {/* Itinéraire */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Itinéraire</h3>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="from">Ville de départ</Label>
+                    <Label htmlFor="departure">Départ</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
-                        id="from"
-                        name="from"
-                        placeholder="Ex: Dakar"
-                        value={tripData.from}
+                        id="departure"
+                        name="departure"
+                        placeholder="Ville ou adresse de départ"
+                        value={tripData.departure}
                         onChange={handleChange}
                         className="pl-10"
                         required
@@ -71,14 +115,14 @@ const CreateTrip = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="to">Ville de destination</Label>
+                    <Label htmlFor="destination">Destination</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
-                        id="to"
-                        name="to"
-                        placeholder="Ex: Thiès"
-                        value={tripData.to}
+                        id="destination"
+                        name="destination"
+                        placeholder="Ville ou adresse d'arrivée"
+                        value={tripData.destination}
                         onChange={handleChange}
                         className="pl-10"
                         required
@@ -91,21 +135,17 @@ const CreateTrip = () => {
               {/* Date et heure */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Date et heure</h3>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="date">Date de départ</Label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="date"
-                        name="date"
-                        type="date"
-                        value={tripData.date}
-                        onChange={handleChange}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
+                    <Label htmlFor="date">Date</Label>
+                    <Input
+                      id="date"
+                      name="date"
+                      type="date"
+                      value={tripData.date}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="time">Heure de départ</Label>
@@ -125,21 +165,19 @@ const CreateTrip = () => {
                 </div>
               </div>
 
-              {/* Détails du trajet */}
+              {/* Véhicule */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Détails du trajet</h3>
-                <div className="grid md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold">Véhicule</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="seats">Nombre de places disponibles</Label>
+                    <Label htmlFor="vehicle">Modèle du véhicule</Label>
                     <div className="relative">
-                      <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Car className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
-                        id="seats"
-                        name="seats"
-                        type="number"
-                        min="1"
-                        max="6"
-                        value={tripData.seats}
+                        id="vehicle"
+                        name="vehicle"
+                        placeholder="Ex: Toyota Corolla"
+                        value={tripData.vehicle}
                         onChange={handleChange}
                         className="pl-10"
                         required
@@ -147,14 +185,32 @@ const CreateTrip = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="price">Prix par passager (CFA)</Label>
+                    <Label htmlFor="vehicleColor">Couleur</Label>
+                    <Input
+                      id="vehicleColor"
+                      name="vehicleColor"
+                      placeholder="Ex: Blanc"
+                      value={tripData.vehicleColor}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Prix et places */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Tarif et places</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Prix par personne (FCFA)</Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="price"
                         name="price"
                         type="number"
-                        placeholder="Ex: 2500"
+                        placeholder="1500"
                         value={tripData.price}
                         onChange={handleChange}
                         className="pl-10"
@@ -162,47 +218,90 @@ const CreateTrip = () => {
                       />
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="availableSeats">Places disponibles</Label>
+                    <div className="relative">
+                      <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Select onValueChange={(value) => setTripData(prev => ({ ...prev, availableSeats: value }))}>
+                        <SelectTrigger className="pl-10">
+                          <SelectValue placeholder="Nombre de places" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 place</SelectItem>
+                          <SelectItem value="2">2 places</SelectItem>
+                          <SelectItem value="3">3 places</SelectItem>
+                          <SelectItem value="4">4 places</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle">Véhicule utilisé</Label>
-                  <div className="relative">
-                    <Car className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="vehicle"
-                      name="vehicle"
-                      placeholder="Ex: Toyota Corolla blanche"
-                      value={tripData.vehicle}
-                      onChange={handleChange}
-                      className="pl-10"
-                      required
+              </div>
+
+              {/* Équipements */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Équipements disponibles</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {amenitiesList.map((amenity) => (
+                    <div key={amenity} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={amenity}
+                        checked={tripData.amenities.includes(amenity)}
+                        onCheckedChange={(checked) => handleAmenityChange(amenity, checked as boolean)}
+                      />
+                      <Label htmlFor={amenity} className="text-sm">
+                        {amenity}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Préférences */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Préférences</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="allowPets"
+                      name="allowPets"
+                      checked={tripData.allowPets}
+                      onCheckedChange={(checked) => setTripData(prev => ({ ...prev, allowPets: checked as boolean }))}
                     />
+                    <Label htmlFor="allowPets">Animaux acceptés</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="smokingAllowed"
+                      name="smokingAllowed"
+                      checked={tripData.smokingAllowed}
+                      onCheckedChange={(checked) => setTripData(prev => ({ ...prev, smokingAllowed: checked as boolean }))}
+                    />
+                    <Label htmlFor="smokingAllowed">Fumeur accepté</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="recurringTrip"
+                      name="recurringTrip"
+                      checked={tripData.recurringTrip}
+                      onCheckedChange={(checked) => setTripData(prev => ({ ...prev, recurringTrip: checked as boolean }))}
+                    />
+                    <Label htmlFor="recurringTrip">Trajet récurrent</Label>
                   </div>
                 </div>
               </div>
 
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description">Description (optionnel)</Label>
+                <Label htmlFor="description">Description (optionnelle)</Label>
                 <Textarea
                   id="description"
                   name="description"
-                  placeholder="Ajoutez des informations supplémentaires sur votre trajet..."
+                  placeholder="Informations supplémentaires sur votre trajet..."
                   value={tripData.description}
                   onChange={handleChange}
                   rows={3}
                 />
-              </div>
-
-              {/* Conditions */}
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Conditions importantes</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Vous devez posséder un permis de conduire valide</li>
-                  <li>• Votre véhicule doit être assuré</li>
-                  <li>• Respectez les horaires convenus avec vos passagers</li>
-                  <li>• Soyez courtois et respectueux</li>
-                </ul>
               </div>
 
               <Button type="submit" className="w-full">
@@ -210,6 +309,19 @@ const CreateTrip = () => {
                 Publier mon trajet
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Information */}
+        <Card className="mt-6 bg-primary/5 border-primary/20">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-primary mb-2">Conseils pour un trajet réussi</h4>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• Soyez ponctuel et communiquez en cas de retard</li>
+              <li>• Respectez les préférences des passagers</li>
+              <li>• Maintenez votre véhicule propre et en bon état</li>
+              <li>• Soyez courtois et respectueux</li>
+            </ul>
           </CardContent>
         </Card>
       </div>
